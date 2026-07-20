@@ -1,0 +1,20 @@
+---
+title: "About"
+image: profile.jpg
+about:
+  template: jolla
+  links:
+    - icon: linkedin
+      text: LinkedIn
+      href: https://www.linkedin.com/in/austin-wong-351b622ab
+    - icon: github
+      text: GitHub
+      href: https://github.com/aw1192
+    - icon: bar-chart-line
+      text: Kaggle
+      href: https://www.kaggle.com/ausw900
+---
+
+Hi, I'm Austin! I'm a data scientist with a special interest in machine learning projects that will positively impact people. Here you'll find posts about my personal projects, insights I've gained, and facts that I think are relevant to my work! The goal of this blog is to document my learning and achievements.
+
+

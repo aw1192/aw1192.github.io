@@ -1,0 +1,25 @@
+project:
+  type: website
+
+website:
+  description: "Notes on ML, data science, and building things"
+  site-url: https://aw1192.github.io
+  title: "Austin Wong"
+  navbar:
+    right:
+      - about.qmd
+      - icon: github
+        href: https://github.com/aw1192
+      - icon: linkedin
+        href: https://www.linkedin.com/in/austin-wong-351b622ab/
+      - icon: bar-chart-line
+        text: Kaggle
+        href: https://www.linkedin.com/in/austin-wong-351b622ab/
+
+format:
+  html:
+    theme:
+      - cosmo
+      - brand
+    css: styles.css
+
