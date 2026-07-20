@@ -1,0 +1,30 @@
+[
+  {
+    "objectID": "posts/2026-07-09-ISIC_2024.html",
+    "href": "posts/2026-07-09-ISIC_2024.html",
+    "title": "ISIC 2024: Base EdgeNeXt Model",
+    "section": "",
+    "text": "Public Code: Link"
+  },
+  {
+    "objectID": "posts/2026-07-09-ISIC_2024.html#image-transforms",
+    "href": "posts/2026-07-09-ISIC_2024.html#image-transforms",
+    "title": "ISIC 2024: Base EdgeNeXt Model",
+    "section": "Image Transforms",
+    "text": "Image Transforms\nThe image transforms I decided to do were horizontal flips, vertical flips, resizing, cropping, and saturation and brightness jittering. I chose these transformations because these were transformations that didn’t alter the image too drastically. In particular, I jitter saturation and brightness only slightly, and did not change other aspects like hue since I figured colors would be an important signal for diagnosis. Finally, I convert the image to a tensor and normalize the inputs according to EdgeNeXt’s pretrained model. This ensures that the EdgeNeXt model gets fed the data it expects for training."
+  },
+  {
+    "objectID": "about.html",
+    "href": "about.html",
+    "title": "About",
+    "section": "",
+    "text": "Hi, I’m Austin! I’m a data scientist with a special interest in machine learning projects that will positively impact people. Here you’ll find posts about my personal projects, insights I’ve gained, and facts that I think are relevant to my work! The goal of this blog is to document my learning and achievements."
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Austin Wong’s Blog",
+    "section": "",
+    "text": "ISIC 2024: Base EdgeNeXt Model\n\n\n\nmachine-learning\n\nISIC_2024\n\n\n\n\n\n\n\n\n\nJul 19, 2026\n\n\n\n\n\nNo matching items"
+  }
+]

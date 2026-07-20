@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss  xmlns:atom="http://www.w3.org/2005/Atom" 
+      xmlns:media="http://search.yahoo.com/mrss/" 
+      xmlns:content="http://purl.org/rss/1.0/modules/content/" 
+      xmlns:dc="http://purl.org/dc/elements/1.1/" 
+      version="2.0">
+<channel>
+<title>Austin Wong</title>
+<link>https://aw1192.github.io/</link>
+<atom:link href="https://aw1192.github.io/index.xml" rel="self" type="application/rss+xml"/>
+<description>Notes on ML, data science, and building things</description>
+<generator>quarto-1.9.38</generator>
+<lastBuildDate>Sun, 19 Jul 2026 07:00:00 GMT</lastBuildDate>
+<item>
+  <title>ISIC 2024: Base EdgeNeXt Model</title>
+  <link>https://aw1192.github.io/posts/2026-07-09-ISIC_2024.html</link>
+  <description><![CDATA[ 
+
+
+
+
+
+<p>Public Code: <a href="https://www.kaggle.com/code/ausw900/isic-2024-base-edgenext">Link</a></p>
+<section id="introduction" class="level1">
+<h1>Introduction</h1>
+<p>The goal of this project is to output the predicted probability of a skin lesion being malignant or benign, given the lesion image and other associated metadata. I’ve long been interested in applying machine learning techniques to the medical field, and as soon as I finished learning about CNNs, I got to work on this project. This dataset came from the Kaggle competition for ISIC 2024: <a href="https://www.kaggle.com/competitions/isic-2024-challenge">link</a>.</p>
+</section>
+<section id="data-cleaning-and-dataset" class="level1">
+<h1>Data Cleaning and Dataset</h1>
+<p>The main training provided in the Kaggle competition was a folder of jpg images and a csv of metadata associated with each image. To get the data in usable form, I created a class called ISICData, which uses PyTorch’s Dataset as a superclass and defines init, len, and getitem methods for the class. The getitem method takes the csv file as a pandas dataframe and opens the image associated with the id in the dataframe. It then applies image transforms and finally returns the image and truth labels. I then put those datasets into DataLoaders. In short, it gives me a way to actually use the data for training purposes.</p>
+<section id="image-transforms" class="level2">
+<h2 class="anchored" data-anchor-id="image-transforms">Image Transforms</h2>
+<p>The image transforms I decided to do were horizontal flips, vertical flips, resizing, cropping, and saturation and brightness jittering. I chose these transformations because these were transformations that didn’t alter the image too drastically. In particular, I jitter saturation and brightness only slightly, and did not change other aspects like hue since I figured colors would be an important signal for diagnosis. Finally, I convert the image to a tensor and normalize the inputs according to EdgeNeXt’s pretrained model. This ensures that the EdgeNeXt model gets fed the data it expects for training.</p>
+</section>
+</section>
+<section id="base-edgenext-model" class="level1">
+<h1>Base EdgeNeXt Model</h1>
+<p>Going from a book full of theory to direct application was challenging, so I first looked at the top solutions for inspiration. From the first place solution (<a href="https://www.kaggle.com/competitions/isic-2024-challenge/writeups/ilya-novoselskiy-1st-place-solution">link</a>), I read that EdgeNeXt was an effective CNN model for the image data. EdgeNeXt is a CNN model that is relatively lightweight, learns global information well, and has adaptive kernel sizes which strike a balance between efficiency and learning necessary high-level details. Inspired by ViTs and CNNs, it combines the advantages of both without the large overhead. It was the obvious choice to make, especially given my 30 hour limited GPU compute time (which would be a problem later on, as I have learned).</p>
+<p>I fine-tuned the EdgeNeXt model on an 80-20 train validation split. Here is the architecture as designed from the official repository: <img src="https://aw1192.github.io/imgs/EdgeNeXt_architecture.png" class="img-fluid" alt="EdgeNeXt architecture"> Image Credit: <a href="https://github.com/mmaaz60/EdgeNeXt">EdgeNeXt Repo</a></p>
+<p>I set the number of output nodes to 1, since I am only predicting between two classes of benign and malignant. This outputs a logit, which I then put through a sigmoid function to get a probability between 0 and 1. I set the number of epochs to 12.</p>
+</section>
+<section id="practical-considerations" class="level1">
+<h1>Practical Considerations</h1>
+<p>When I built this, I expected the actual machine learning portion to be the hardest part, but it turns out that the hardest part was Kaggle’s built in GPU limit of 30 hrs/week and 12 hrs per session. At first, I didn’t realize how little that was, and I wasted my first 12 hours just seeing if my model would work. I got a result back, but it only ran 7 epochs and timed out the 12 hour limit. This was my first larger scale ML project, so I was a bit surprised by this. I had to make checkpointing functionality which would save the best model just in case the session timed out in the middle of training. Additionally, I made some efficiency adjustments, the biggest of which was using automatic mixed precision (AMP), which makes certain operations use lower precision floats to save time. This actually resulted in a 2.62x speedup compared to the version that did not use AMP. My 7 epoch + 5 epoch run checkpointed from the 7th epoch gave me the following results: Train Loss: 0.0053 | Val Loss: 0.0059 | Val pAUC: 0.8578.</p>
+</section>
+<section id="next-steps" class="level1">
+<h1>Next Steps</h1>
+<p>I have almost completed the next phase of this project, which is making a two headed fusion model. It starts with an independent image branch using EdgeNeXt and another independent MLP branch using the metadata provided for each image, concatenates the results, and classifies the concatenated tensor using another MLP. The only step that remains is fully training, which is taking much longer because I am employing a 5 fold approach to training and making predictions by averaging the outputs of the models across all 5 folds.</p>
+</section>
+<section id="citations" class="level1">
+<h1>Citations</h1>
+<p><a href="https://www.kaggle.com/competitions/isic-2024-challenge">Kaggle Competition</a></p>
+<p><a href="https://www.kaggle.com/competitions/isic-2024-challenge/writeups/ilya-novoselskiy-1st-place-solution">First Place Solution</a></p>
+<p><a href="https://github.com/mmaaz60/EdgeNeXt">EdgeNeXt Repo</a></p>
+
+
+</section>
+
+ ]]></description>
+  <category>machine-learning</category>
+  <category>ISIC_2024</category>
+  <guid>https://aw1192.github.io/posts/2026-07-09-ISIC_2024.html</guid>
+  <pubDate>Sun, 19 Jul 2026 07:00:00 GMT</pubDate>
+</item>
+</channel>
+</rss>
