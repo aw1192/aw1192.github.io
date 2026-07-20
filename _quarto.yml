@@ -4,7 +4,8 @@ project:
 website:
   description: "Notes on ML, data science, and building things"
   site-url: https://aw1192.github.io
-  title: "Austin Wong"
+  title: "Austin Wong's Blog"
+  google-analytics: "G-4TLJZR9VQE"
   navbar:
     right:
       - about.qmd
