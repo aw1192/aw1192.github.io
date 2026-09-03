@@ -1,0 +1,132 @@
+---
+title: "ISIC 2024: Final Submission"
+date: 2026-09-03
+categories: [machine-learning, ISIC_2024, nonparametric-tests, ablation]
+draft: false
+---
+Fusion Model Training Code: https://www.kaggle.com/code/ausw900/isic-2024-edgenext-mlp
+New Standalone Model Training Code: https://www.kaggle.com/code/ausw900/isic-2024-base-edgenext
+
+# Motivation
+This post is a continuation of the previous ISIC 2024 competition post. In the first post, I only fine tuned the EdgeNeXt model by training it on the skin lesion image data.
+I didn't incorporate the tabular metadata of each image. The goal of this new model was to join the fuse the learned representation of the image data with a learned representation
+of the tabular data, and then funnel that into an MLP classifier.
+
+# Methods
+## Model
+To my model class, I had two heads, the original EdgeNeXt head and new MLP head which would take in the tabular data and output a tensor of length 64. The MLP head uses Linear layers, 
+ReLU, BatchNorm1d, and Droupout. The learned representations of the image and the metadata then get fused into a single tensor. This tensor goes through another MLP which outputs a single
+logit. The logit is passed through the sigmoid function, which converts into a probability representing the chance of malignancy.
+```{mermaid}
+%%{init: {'theme': 'base', 'themeVariables': {'primaryTextColor': '#111827', 'lineColor': '#374151', 'fontSize': '14px'}}}%%
+flowchart TD
+    IMG["Image input<br/>256×256×3"]
+    META["Metadata input<br/>tabular_dims"]
+
+    subgraph IMGBRANCH["Image branch"]
+        direction TB
+        BACKBONE["EdgeNeXt-base (timm)<br/>pretrained, num_classes=0"]
+        IMGFEAT["img_pred<br/>(584,)"]
+        BACKBONE --> IMGFEAT
+    end
+
+    subgraph MLPBRANCH["Tabular MLP branch"]
+        direction TB
+        L1["Linear(tabular_dims → 256)"]
+        BN1["BatchNorm1d(256)"]
+        R1["ReLU"]
+        D1["Dropout(0.25)"]
+        L2["Linear(256 → 128)"]
+        BN2["BatchNorm1d(128)"]
+        R2["ReLU"]
+        D2["Dropout(0.2)"]
+        L3["Linear(128 → 64)"]
+        METAFEAT["metadata_pred<br/>(64,)"]
+        L1 --> BN1 --> R1 --> D1 --> L2 --> BN2 --> R2 --> D2 --> L3 --> METAFEAT
+    end
+
+    CAT["torch.cat([img_pred, metadata_pred], dim=1)<br/>(584 + 64 = 648,)"]
+
+    subgraph FUSION["final_classifier"]
+        direction TB
+        F1["Linear(648 → 512)"]
+        FBN1["BatchNorm1d(512)"]
+        FR1["ReLU"]
+        FD1["Dropout(0.25)"]
+        F2["Linear(512 → 128)"]
+        FBN2["BatchNorm1d(128)"]
+        FR2["ReLU"]
+        FD2["Dropout(0.25)"]
+        F3["Linear(128 → 1)"]
+        F1 --> FBN1 --> FR1 --> FD1 --> F2 --> FBN2 --> FR2 --> FD2 --> F3
+    end
+
+    OUT["squeeze(-1) → logit"]
+    SIG["torch.sigmoid<br/>(applied in validate(), not in forward)"]
+    PRED["predicted malignancy probability"]
+
+    IMG --> BACKBONE
+    META --> L1
+    IMGFEAT --> CAT
+    METAFEAT --> CAT
+    CAT --> F1
+    F3 --> OUT --> SIG --> PRED
+
+    classDef inputStyle fill:#f3f4f6,stroke:#374151,color:#111827,stroke-width:1px
+    classDef imgStyle fill:#dbeafe,stroke:#1d4ed8,color:#111827,stroke-width:1px
+    classDef mlpStyle fill:#dcfce7,stroke:#15803d,color:#111827,stroke-width:1px
+    classDef fusionStyle fill:#fef3c7,stroke:#b45309,color:#111827,stroke-width:1px
+    classDef outputStyle fill:#ede9fe,stroke:#6d28d9,color:#111827,stroke-width:1px
+
+    class IMG,META inputStyle
+    class BACKBONE,IMGFEAT imgStyle
+    class L1,BN1,R1,D1,L2,BN2,R2,D2,L3,METAFEAT mlpStyle
+    class CAT,F1,FBN1,FR1,FD1,F2,FBN2,FR2,FD2,F3 fusionStyle
+    class OUT,SIG,PRED outputStyle
+
+    style IMGBRANCH fill:#eff6ff,stroke:#1d4ed8,stroke-width:1px
+    style MLPBRANCH fill:#f0fdf4,stroke:#15803d,stroke-width:1px
+    style FUSION fill:#fffbeb,stroke:#b45309,stroke-width:1px
+```
+
+## Data Augmentation
+I kept the same image augmentation methods as the first model. The training transformations were randomized horizontal and vertical flips, crops, and color jittering. I chose these transformations
+because there is no important signals being carried through flips or crops, and I only did slight color jittering with no hue shift since I figured color of a lesion carried important diagnostic signal.
+
+## Data Cleaning
+I created a Dataset class to process the data into usable format for my model. I made two big changes from the original design. The first change was that instead of taking in jpg images,
+I made the Dataset class process the hdf5 format images and turned those into tensors. The second big change came from the fact that I needed to process tabular metadata, so I built a pipeline
+that extracted the current row's metadata and convert into a tensor. 
+
+When dealing with the actual data, I cleaned it by removing unnecessary columns that carried no signal, such as attribution, copyright licenses, and columns simply not found in the test set. 
+I also dealt with categorical data by turning them into one hot vectors using the pandas.dummies method on the columns 'sex', 'anatom_site_general', and 'tbp_lv_location_simple'. This allowed the categorical
+data to be turned into numerical data which is able to be processed as a tensor.
+
+# Training
+My training would consist of a 5 fold split. Each fold had its own model, and I would take the 5 models and ensemble their scores by averaging the outputs. This makes the full ensembled model trained on the full
+dataset. Each fold took a lengthy amount of time to train, so I had to make checkpointing functions which saved the model whenever an epoch was completed, and saved only the best model as my final one for that fold.
+The program would resume from its last checkpoint as soon as it was started up once again. Since the Kaggle site only allows me to train for 12 hours at once, I added a early stop mechanism that detects if there is only 2 hours left in my active session, which would prevent the process from being interrupted
+suddenly. 
+
+# Testing
+I ran this code over the course of a week, and finally got all my models. I ensembled the models, and submitted it to the competition. My score was 0.14144, out of a maximum of 0.2. This was not much different than my standalone EdgeNeXt
+model, which had its validation score of 0.14881. 
+
+# Ablation Study
+When I saw these similar results, I decided to run a more in-depth ablation study by training my standalone EdgeNeXt model the exact same as my fusion model. My standalone model was trained on a single k fold stratified split.
+In my new version, I brought over the same training decisions as the fusion model, like training the data on 80-20 splits of 5 folds, over 12 epochs to exactly match the training architecture as my fusion model. After that, I tested that against the real competition test data, granting me a score of 0.14345 out of 0.2.
+The final scores were still surprisingly close, since now every part of the study was controlled for and the only true difference was in the model. 
+
+I wanted to know if there was any difference in performance between the models, so I used a nonparametric statistical test. My null hypothesis was that the models were the same, and the alternative was that their performances were different. The test I used was a paired bootstrap test that measured the differences between the 
+model's pAUC on the constraint that we only tolerate 20% false negatives (the competition's metric). First I take a bootstrap sample of the data. It pairs the data that belong to a single patient and measures the pAUC for the standalone and fusion model, and then takes the difference, doing this for every patient. This process repeats 10,000 times.
+Then I compute the confidence interval and the p value. The 95% confidence interval was [-0.02560, 0.00225] and the p value is 0.1018. At 95% confidence, there is no significant evidence to suggest there is a difference between these model's pAUC. 
+
+## Possible Explanations of Similar Performance 
+One explanation why these models perform so similarly is that the EdgeNeXt outputs mostly dominate the decision making of the model, leaving the MLP branch to contribute very little. This effect may also be intensified by the fact that the MLP branch outputs a smaller vector logit than the EdgeNeXt branch (64 vs 584).
+It could also be possible that the MLP branch "distracts" the EdgeNeXt branch in the final classifier, where the MLP logits capture unnecessary information (noise). The MLP branch in general may not have been very effective at capturing the appropriate signal, which was confirmed later on. While I was finalizing the results of this project,
+I was learning about more machine learning techniques on the side and learned that decision trees perform much better than neural networks on tabular data. 
+
+# Future Improvements
+In a future deployment, I would integrate gradient boosted decision trees as my secondary branch instead of MLPs, since I have learned that they are more effective for tabular data. I would also be more careful with my checkpointing functions, because I discovered it could skip saving the best model if it somehow got through two folds in one run. 
+I made a temporary fix by forcing it to stop as soon as a fold was completed, but this could be improved. I have also thus learned some feature reduction techniques, so instead of manually removing features I think would not be useful, I can approach this problem more systematically. One more improvement could come in my hyperparameter tuning. I recently
+learned a new technique called hyperbanding, which creates many configurations of the hyperparameters and tests them with small computation budgets, pruning the ones that immediately produce bad results, and continuing to train the better ones. 

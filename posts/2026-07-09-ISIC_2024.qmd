@@ -40,7 +40,7 @@ a sigmoid function to get a probability between 0 and 1. I set the number of epo
 When I built this, I expected the actual machine learning portion to be the hardest part, but it turns out that the hardest part was Kaggle's built in GPU limit of 30 hrs/week and 12 hrs per session. At first, I didn't realize how little that was, and I wasted my first 12 hours 
 just seeing if my model would work. I got a result back, but it only ran 7 epochs and timed out the 12 hour limit. This was my first larger scale ML project, so I was a bit surprised by this. I had to make checkpointing functionality which would save the best model just in case the 
 session timed out in the middle of training. Additionally, I made some efficiency adjustments, the biggest of which was using automatic mixed precision (AMP), which makes certain operations use lower precision floats to save time. This actually resulted in a 2.62x speedup compared to the version that
-did not use AMP. My 7 epoch + 5 epoch run checkpointed from the 7th epoch gave me the following results: Train Loss: 0.0053 | Val Loss: 0.0059 | Val pAUC: 0.8578.
+did not use AMP. My 7 epoch + 5 epoch run checkpointed from the 7th epoch gave me the following results: Train Loss: 0.0053 | Val Loss: 0.0059 | Val pAUC: 0.8578. In terms of the competiton metric, this is 0.14881 out of 0.2.
 
 # Next Steps
 I have almost completed the next phase of this project, which is making a two headed fusion model. It starts with an independent image branch using EdgeNeXt and another independent MLP branch using the metadata provided for each image, concatenates the results, and classifies the concatenated tensor 
