@@ -1,5 +1,54 @@
 [
   {
+    "objectID": "posts/2026-09-03-ISIC_2024.html",
+    "href": "posts/2026-09-03-ISIC_2024.html",
+    "title": "ISIC 2024: Final Submission",
+    "section": "",
+    "text": "Fusion Model Training Code: https://www.kaggle.com/code/ausw900/isic-2024-edgenext-mlp New Standalone Model Training Code: https://www.kaggle.com/code/ausw900/isic-2024-base-edgenext"
+  },
+  {
+    "objectID": "posts/2026-09-03-ISIC_2024.html#model",
+    "href": "posts/2026-09-03-ISIC_2024.html#model",
+    "title": "ISIC 2024: Final Submission",
+    "section": "Model",
+    "text": "Model\nTo my model class, I had two heads, the original EdgeNeXt head and new MLP head which would take in the tabular data and output a tensor of length 64. The MLP head uses Linear layers, ReLU, BatchNorm1d, and Droupout. The learned representations of the image and the metadata then get fused into a single tensor. This tensor goes through another MLP which outputs a single logit. The logit is passed through the sigmoid function, which converts into a probability representing the chance of malignancy.\n\n\n\n\n\n%%{init: {'theme': 'base', 'themeVariables': {'primaryTextColor': '#111827', 'lineColor': '#374151', 'fontSize': '14px'}}}%%\nflowchart TD\n    IMG[\"Image input&lt;br/&gt;256×256×3\"]\n    META[\"Metadata input&lt;br/&gt;tabular_dims\"]\n\n    subgraph IMGBRANCH[\"Image branch\"]\n        direction TB\n        BACKBONE[\"EdgeNeXt-base (timm)&lt;br/&gt;pretrained, num_classes=0\"]\n        IMGFEAT[\"img_pred&lt;br/&gt;(584,)\"]\n        BACKBONE --&gt; IMGFEAT\n    end\n\n    subgraph MLPBRANCH[\"Tabular MLP branch\"]\n        direction TB\n        L1[\"Linear(tabular_dims → 256)\"]\n        BN1[\"BatchNorm1d(256)\"]\n        R1[\"ReLU\"]\n        D1[\"Dropout(0.25)\"]\n        L2[\"Linear(256 → 128)\"]\n        BN2[\"BatchNorm1d(128)\"]\n        R2[\"ReLU\"]\n        D2[\"Dropout(0.2)\"]\n        L3[\"Linear(128 → 64)\"]\n        METAFEAT[\"metadata_pred&lt;br/&gt;(64,)\"]\n        L1 --&gt; BN1 --&gt; R1 --&gt; D1 --&gt; L2 --&gt; BN2 --&gt; R2 --&gt; D2 --&gt; L3 --&gt; METAFEAT\n    end\n\n    CAT[\"torch.cat([img_pred, metadata_pred], dim=1)&lt;br/&gt;(584 + 64 = 648,)\"]\n\n    subgraph FUSION[\"final_classifier\"]\n        direction TB\n        F1[\"Linear(648 → 512)\"]\n        FBN1[\"BatchNorm1d(512)\"]\n        FR1[\"ReLU\"]\n        FD1[\"Dropout(0.25)\"]\n        F2[\"Linear(512 → 128)\"]\n        FBN2[\"BatchNorm1d(128)\"]\n        FR2[\"ReLU\"]\n        FD2[\"Dropout(0.25)\"]\n        F3[\"Linear(128 → 1)\"]\n        F1 --&gt; FBN1 --&gt; FR1 --&gt; FD1 --&gt; F2 --&gt; FBN2 --&gt; FR2 --&gt; FD2 --&gt; F3\n    end\n\n    OUT[\"squeeze(-1) → logit\"]\n    SIG[\"torch.sigmoid&lt;br/&gt;(applied in validate(), not in forward)\"]\n    PRED[\"predicted malignancy probability\"]\n\n    IMG --&gt; BACKBONE\n    META --&gt; L1\n    IMGFEAT --&gt; CAT\n    METAFEAT --&gt; CAT\n    CAT --&gt; F1\n    F3 --&gt; OUT --&gt; SIG --&gt; PRED\n\n    classDef inputStyle fill:#f3f4f6,stroke:#374151,color:#111827,stroke-width:1px\n    classDef imgStyle fill:#dbeafe,stroke:#1d4ed8,color:#111827,stroke-width:1px\n    classDef mlpStyle fill:#dcfce7,stroke:#15803d,color:#111827,stroke-width:1px\n    classDef fusionStyle fill:#fef3c7,stroke:#b45309,color:#111827,stroke-width:1px\n    classDef outputStyle fill:#ede9fe,stroke:#6d28d9,color:#111827,stroke-width:1px\n\n    class IMG,META inputStyle\n    class BACKBONE,IMGFEAT imgStyle\n    class L1,BN1,R1,D1,L2,BN2,R2,D2,L3,METAFEAT mlpStyle\n    class CAT,F1,FBN1,FR1,FD1,F2,FBN2,FR2,FD2,F3 fusionStyle\n    class OUT,SIG,PRED outputStyle\n\n    style IMGBRANCH fill:#eff6ff,stroke:#1d4ed8,stroke-width:1px\n    style MLPBRANCH fill:#f0fdf4,stroke:#15803d,stroke-width:1px\n    style FUSION fill:#fffbeb,stroke:#b45309,stroke-width:1px"
+  },
+  {
+    "objectID": "posts/2026-09-03-ISIC_2024.html#data-augmentation",
+    "href": "posts/2026-09-03-ISIC_2024.html#data-augmentation",
+    "title": "ISIC 2024: Final Submission",
+    "section": "Data Augmentation",
+    "text": "Data Augmentation\nI kept the same image augmentation methods as the first model. The training transformations were randomized horizontal and vertical flips, crops, and color jittering. I chose these transformations because there is no important signals being carried through flips or crops, and I only did slight color jittering with no hue shift since I figured color of a lesion carried important diagnostic signal."
+  },
+  {
+    "objectID": "posts/2026-09-03-ISIC_2024.html#data-cleaning",
+    "href": "posts/2026-09-03-ISIC_2024.html#data-cleaning",
+    "title": "ISIC 2024: Final Submission",
+    "section": "Data Cleaning",
+    "text": "Data Cleaning\nI created a Dataset class to process the data into usable format for my model. I made two big changes from the original design. The first change was that instead of taking in jpg images, I made the Dataset class process the hdf5 format images and turned those into tensors. The second big change came from the fact that I needed to process tabular metadata, so I built a pipeline that extracted the current row’s metadata and convert into a tensor.\nWhen dealing with the actual data, I cleaned it by removing unnecessary columns that carried no signal, such as attribution, copyright licenses, and columns simply not found in the test set. I also dealt with categorical data by turning them into one hot vectors using the pandas.dummies method on the columns ‘sex’, ‘anatom_site_general’, and ‘tbp_lv_location_simple’. This allowed the categorical data to be turned into numerical data which is able to be processed as a tensor."
+  },
+  {
+    "objectID": "posts/2026-09-03-ISIC_2024.html#possible-explanations-of-similar-performance",
+    "href": "posts/2026-09-03-ISIC_2024.html#possible-explanations-of-similar-performance",
+    "title": "ISIC 2024: Final Submission",
+    "section": "Possible Explanations of Similar Performance",
+    "text": "Possible Explanations of Similar Performance\nOne explanation why these models perform so similarly is that the EdgeNeXt outputs mostly dominate the decision making of the model, leaving the MLP branch to contribute very little. This effect may also be intensified by the fact that the MLP branch outputs a smaller vector logit than the EdgeNeXt branch (64 vs 584). It could also be possible that the MLP branch “distracts” the EdgeNeXt branch in the final classifier, where the MLP logits capture unnecessary information (noise). The MLP branch in general may not have been very effective at capturing the appropriate signal, which was confirmed later on. While I was finalizing the results of this project, I was learning about more machine learning techniques on the side and learned that decision trees perform much better than neural networks on tabular data."
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Austin Wong’s Blog",
+    "section": "",
+    "text": "ISIC 2024: Final Submission\n\n\n\nmachine-learning\n\nISIC_2024\n\nnonparametric-tests\n\nablation\n\n\n\n\n\n\n\n\n\nSep 3, 2026\n\n\n\n\n\n\n\n\n\n\n\n\nISIC 2024: Base EdgeNeXt Model\n\n\n\nmachine-learning\n\nISIC_2024\n\n\n\n\n\n\n\n\n\nJul 19, 2026\n\n\n\n\n\nNo matching items"
+  },
+  {
+    "objectID": "about.html",
+    "href": "about.html",
+    "title": "About",
+    "section": "",
+    "text": "Hi, I’m Austin! I’m a data scientist with a special interest in machine learning projects that will positively impact people. Here you’ll find posts about my personal projects, insights I’ve gained, and facts that I think are relevant to my work! The goal of this blog is to document my learning and achievements."
+  },
+  {
     "objectID": "posts/2026-07-09-ISIC_2024.html",
     "href": "posts/2026-07-09-ISIC_2024.html",
     "title": "ISIC 2024: Base EdgeNeXt Model",
@@ -12,19 +61,5 @@
     "title": "ISIC 2024: Base EdgeNeXt Model",
     "section": "Image Transforms",
     "text": "Image Transforms\nThe image transforms I decided to do were horizontal flips, vertical flips, resizing, cropping, and saturation and brightness jittering. I chose these transformations because these were transformations that didn’t alter the image too drastically. In particular, I jitter saturation and brightness only slightly, and did not change other aspects like hue since I figured colors would be an important signal for diagnosis. Finally, I convert the image to a tensor and normalize the inputs according to EdgeNeXt’s pretrained model. This ensures that the EdgeNeXt model gets fed the data it expects for training."
-  },
-  {
-    "objectID": "about.html",
-    "href": "about.html",
-    "title": "About",
-    "section": "",
-    "text": "Hi, I’m Austin! I’m a data scientist with a special interest in machine learning projects that will positively impact people. Here you’ll find posts about my personal projects, insights I’ve gained, and facts that I think are relevant to my work! The goal of this blog is to document my learning and achievements."
-  },
-  {
-    "objectID": "index.html",
-    "href": "index.html",
-    "title": "Austin Wong’s Blog",
-    "section": "",
-    "text": "ISIC 2024: Base EdgeNeXt Model\n\n\n\nmachine-learning\n\nISIC_2024\n\n\n\n\n\n\n\n\n\nJul 19, 2026\n\n\n\n\n\nNo matching items"
   }
 ]
