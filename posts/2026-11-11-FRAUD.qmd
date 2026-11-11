@@ -53,5 +53,9 @@ The XGB alone performed the best, even outperforming the stack by a small amount
 that the XGB wouldn't catch already. The main function of the Isolation Forest would be a supplementary model that would catch unseen fraud/anomalous transactions. This is good to make a robust model, since anomalous transactions should be flagged for fraud as a precaution.
 However, it didn't work for the data I had since it was all labeled. In fact, it probably added extra noise since it just did worse than the pure XGB. 
 
+# Future Considerations
+I can test the Isolation Forest's capabilities by removing the labels from a portion of the training data, and seeing at what percent of labels removed does the benefits of the Isolation Forest start showing. 
+A basic heuristic way to know if the Isolation side is working is if the full stack is doing better than the XGBoost. This is realistic anyways, since the transaction data is not going to come pre-labeled with fraud or not. 
+
 # Architecture Summary
 ![](../imgs/architecture.svg)
