@@ -1,5 +1,54 @@
 [
   {
+    "objectID": "posts/2026-11-11-FRAUD.html",
+    "href": "posts/2026-11-11-FRAUD.html",
+    "title": "Detecting Credit Card Fraud",
+    "section": "",
+    "text": "Recognizing fraudulent charges is an important role for credit card companies to play in order to ensure the safety of their customers and their reputation. Here I present a credit card fraud model that labels charges as fraudulent or legitimate using a stacked ensemble."
+  },
+  {
+    "objectID": "posts/2026-11-11-FRAUD.html#base-learners",
+    "href": "posts/2026-11-11-FRAUD.html#base-learners",
+    "title": "Detecting Credit Card Fraud",
+    "section": "Base Learners",
+    "text": "Base Learners\nMy base learners were XGB gradient boosted decision trees and isolation forest. Gradient boosted decision trees make a prediction and uses trees to fit to the residuals, gradually making a better fit to the data. The gradient boosted decision trees would perform well on supervised tabular data, with faster convergence and more accurate results than a deep learning method. Isolation forests are an unsupervised method that performs anomaly detection by making random splits on the features. Anomalous data require less splits to become a leaf. The hope was that together, they could create a robust model where the XGB would accurately label known frauds and the isolation forest could label “anomalous” data, which could catch unknown, unlabeled frauds."
+  },
+  {
+    "objectID": "posts/2026-11-11-FRAUD.html#meta-learner",
+    "href": "posts/2026-11-11-FRAUD.html#meta-learner",
+    "title": "Detecting Credit Card Fraud",
+    "section": "Meta-Learner",
+    "text": "Meta-Learner\nThe meta-learner is a simple logistic regression. It would take the concatenated OOF predictions of the base learners as training features, which prevents leakage in the stack ensemble. The validation set gets put through the base learners to get validation features. It creates a weighted vote on the base learner predictions and combines their information."
+  },
+  {
+    "objectID": "posts/2026-07-09-ISIC_2024.html",
+    "href": "posts/2026-07-09-ISIC_2024.html",
+    "title": "ISIC 2024: Base EdgeNeXt Model",
+    "section": "",
+    "text": "Public Code: Link"
+  },
+  {
+    "objectID": "posts/2026-07-09-ISIC_2024.html#image-transforms",
+    "href": "posts/2026-07-09-ISIC_2024.html#image-transforms",
+    "title": "ISIC 2024: Base EdgeNeXt Model",
+    "section": "Image Transforms",
+    "text": "Image Transforms\nThe image transforms I decided to do were horizontal flips, vertical flips, resizing, cropping, and saturation and brightness jittering. I chose these transformations because these were transformations that didn’t alter the image too drastically. In particular, I jitter saturation and brightness only slightly, and did not change other aspects like hue since I figured colors would be an important signal for diagnosis. Finally, I convert the image to a tensor and normalize the inputs according to EdgeNeXt’s pretrained model. This ensures that the EdgeNeXt model gets fed the data it expects for training."
+  },
+  {
+    "objectID": "about.html",
+    "href": "about.html",
+    "title": "About",
+    "section": "",
+    "text": "Hi, I’m Austin! I’m a data scientist with a special interest in machine learning projects that will positively impact people. Here you’ll find posts about my personal projects, insights I’ve gained, and facts that I think are relevant to my work! The goal of this blog is to document my learning and achievements."
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Austin Wong’s Blog",
+    "section": "",
+    "text": "Detecting Credit Card Fraud\n\n\n\nanomaly-detection\n\nfraud-detection\n\n\n\n\n\n\n\n\n\nNov 11, 2026\n\n\n\n\n\n\n\n\n\n\n\n\nISIC 2024: Final Submission\n\n\n\nmachine-learning\n\nISIC_2024\n\nnonparametric-tests\n\nablation\n\n\n\n\n\n\n\n\n\nSep 3, 2026\n\n\n\n\n\n\n\n\n\n\n\n\nISIC 2024: Base EdgeNeXt Model\n\n\n\nmachine-learning\n\nISIC_2024\n\n\n\n\n\n\n\n\n\nJul 19, 2026\n\n\n\n\n\nNo matching items"
+  },
+  {
     "objectID": "posts/2026-09-03-ISIC_2024.html",
     "href": "posts/2026-09-03-ISIC_2024.html",
     "title": "ISIC 2024: Final Submission",
@@ -33,33 +82,5 @@
     "title": "ISIC 2024: Final Submission",
     "section": "Possible Explanations of Similar Performance",
     "text": "Possible Explanations of Similar Performance\nOne explanation why these models perform so similarly is that the EdgeNeXt outputs mostly dominate the decision making of the model, leaving the MLP branch to contribute very little. This effect may also be intensified by the fact that the MLP branch outputs a smaller vector logit than the EdgeNeXt branch (64 vs 584). It could also be possible that the MLP branch “distracts” the EdgeNeXt branch in the final classifier, where the MLP logits capture unnecessary information (noise). The MLP branch in general may not have been very effective at capturing the appropriate signal, which was confirmed later on. While I was finalizing the results of this project, I was learning about more machine learning techniques on the side and learned that decision trees perform much better than neural networks on tabular data."
-  },
-  {
-    "objectID": "index.html",
-    "href": "index.html",
-    "title": "Austin Wong’s Blog",
-    "section": "",
-    "text": "ISIC 2024: Final Submission\n\n\n\nmachine-learning\n\nISIC_2024\n\nnonparametric-tests\n\nablation\n\n\n\n\n\n\n\n\n\nSep 3, 2026\n\n\n\n\n\n\n\n\n\n\n\n\nISIC 2024: Base EdgeNeXt Model\n\n\n\nmachine-learning\n\nISIC_2024\n\n\n\n\n\n\n\n\n\nJul 19, 2026\n\n\n\n\n\nNo matching items"
-  },
-  {
-    "objectID": "about.html",
-    "href": "about.html",
-    "title": "About",
-    "section": "",
-    "text": "Hi, I’m Austin! I’m a data scientist with a special interest in machine learning projects that will positively impact people. Here you’ll find posts about my personal projects, insights I’ve gained, and facts that I think are relevant to my work! The goal of this blog is to document my learning and achievements."
-  },
-  {
-    "objectID": "posts/2026-07-09-ISIC_2024.html",
-    "href": "posts/2026-07-09-ISIC_2024.html",
-    "title": "ISIC 2024: Base EdgeNeXt Model",
-    "section": "",
-    "text": "Public Code: Link"
-  },
-  {
-    "objectID": "posts/2026-07-09-ISIC_2024.html#image-transforms",
-    "href": "posts/2026-07-09-ISIC_2024.html#image-transforms",
-    "title": "ISIC 2024: Base EdgeNeXt Model",
-    "section": "Image Transforms",
-    "text": "Image Transforms\nThe image transforms I decided to do were horizontal flips, vertical flips, resizing, cropping, and saturation and brightness jittering. I chose these transformations because these were transformations that didn’t alter the image too drastically. In particular, I jitter saturation and brightness only slightly, and did not change other aspects like hue since I figured colors would be an important signal for diagnosis. Finally, I convert the image to a tensor and normalize the inputs according to EdgeNeXt’s pretrained model. This ensures that the EdgeNeXt model gets fed the data it expects for training."
   }
 ]
