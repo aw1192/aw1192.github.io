@@ -199,7 +199,12 @@ gtag('config', 'G-4TLJZR9VQE', { 'anonymize_ip': true});
 </section>
 <section id="results" class="level1">
 <h1>Results</h1>
-<p>The test AUCPR at the end of the final run was: - XGB: 0.8645 - Isolation Forest: 0.3046 - Stack (logistic regression): 0.8642</p>
+<p>The test AUCPR at the end of the final run was:</p>
+<ul>
+<li>XGB: 0.8645</li>
+<li>Isolation Forest: 0.3046</li>
+<li>Stack (logistic regression): 0.8642</li>
+</ul>
 <p>The XGB alone performed the best, even outperforming the stack by a small amount. The most likely reason for this, which I did not realize when initially building this project, was that since all the data was labeled, the Isolation Forest was not going to add much new information that the XGB wouldn’t catch already. The main function of the Isolation Forest would be a supplementary model that would catch unseen fraud/anomalous transactions. This is good to make a robust model, since anomalous transactions should be flagged for fraud as a precaution. However, it didn’t work for the data I had since it was all labeled. In fact, it probably added extra noise since it just did worse than the pure XGB.</p>
 </section>
 <section id="future-considerations" class="level1">
